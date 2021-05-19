@@ -15,7 +15,6 @@ static void configSaveCallback()
 }
 
 // Function implementing callback cannot itself be a class member
-#ifdef ESP_32
 void configWiFiCallback(ESP_WiFiManager *myWiFiManager)
 {
   debug.printLn(F("WIFI: Failed to connect to assigned AP, entering config mode"));
@@ -24,16 +23,6 @@ void configWiFiCallback(ESP_WiFiManager *myWiFiManager)
         delay(10);
     }
 }
-#elif defined(ESP_8266)
-static void configWiFiCallback(WiFiManager *myWiFiManager)
-{ // Notify the user that we're entering config mode
-    debug.printLn(WIFI, F("WIFI: Failed to connect to assigned AP, entering config mode"));
-    while (millis() < 800)
-    { // for factory-reset system this will be called before display is responsive. give it a second.
-        delay(10);
-    }
-}
-#endif
 
 static void resetCallback()
 { // callback to reset the micro
@@ -79,17 +68,12 @@ void Esp::wiFiSetup()
     WiFi.macAddress(_espMac);            // Read our MAC address and save it to espMac
     WiFi.hostname(config.getNodeName()); // Assign our hostname before connecting to WiFi
     WiFi.setAutoReconnect(true);         // Tell WiFi to autoreconnect if connection has dropped
-#ifdef ESP_32
     WiFi.setSleep(false); // Disable WiFi sleep modes to prevent occasional disconnects
-#elif defined(ESP_8266)
-    WiFi.setSleepMode(WIFI_NONE_SLEEP); // Disable WiFi sleep modes to prevent occasional disconnects
-#endif
 
     if (String(config.getWIFISSID()) == "")
     { // If the sketch has not defined a static wifiSSID use WiFiManager to collect required information from the user.
 
         // id/name, placeholder/prompt, default value, length, extra tags
-        #ifdef ESP_32
         ESP_WMParameter custom_nodeNameHeader("<br/><br/><b>Node Name</b>");
         ESP_WMParameter custom_nodeName("nodeName", "Node (required. lowercase letters, numbers, and _ only)", config.getNodeName(), 15, " maxlength=15 required pattern='[a-z0-9_]*'");
         ESP_WMParameter custom_groupName("groupName", "Group Name (required)", config.getGroupName(), 15, " maxlength=15 required");
@@ -101,25 +85,8 @@ void Esp::wiFiSetup()
         ESP_WMParameter custom_configHeader("<br/><br/><b>Admin access</b>");
         ESP_WMParameter custom_configUser("configUser", "Config User", web.getUser(), 15, " maxlength=31'");
         ESP_WMParameter custom_configPassword("configPassword", "Config Password", web.getPassword(), 31, " maxlength=31 type='password'");
-        #elif defined(ESP_8266)
-        WiFiManagerParameter custom_nodeNameHeader("<br/><br/><b>Node Name</b>");
-        WiFiManagerParameter custom_nodeName("nodeName", "Node (required. lowercase letters, numbers, and _ only)", config.getNodeName(), 15, " maxlength=15 required pattern='[a-z0-9_]*'");
-        WiFiManagerParameter custom_groupName("groupName", "Group Name (required)", config.getGroupName(), 15, " maxlength=15 required");
-        WiFiManagerParameter custom_mqttHeader("<br/><br/><b>MQTT Broker</b>");
-        WiFiManagerParameter custom_mqttServer("mqttServer", "MQTT Server", config.getMQTTServer(), 63, " maxlength=39");
-        WiFiManagerParameter custom_mqttPort("mqttPort", "MQTT Port", config.getMQTTPort(), 5, " maxlength=5 type='number'");
-        WiFiManagerParameter custom_mqttUser("mqttUser", "MQTT User", config.getMQTTUser(), 31, " maxlength=31");
-        WiFiManagerParameter custom_mqttPassword("mqttPassword", "MQTT Password", config.getMQTTPassword(), 31, " maxlength=31 type='password'");
-        WiFiManagerParameter custom_configHeader("<br/><br/><b>Admin access</b>");
-        WiFiManagerParameter custom_configUser("configUser", "Config User", web.getUser(), 15, " maxlength=31'");
-        WiFiManagerParameter custom_configPassword("configPassword", "Config Password", web.getPassword(), 31, " maxlength=31 type='password'");
-        #endif
 
-        #ifdef ESP_32
         ESP_WiFiManager wifiManager;
-        #elif defined(ESP_8266)
-        WiFiManager wifiManager;
-        #endif
 
         wifiManager.setSaveConfigCallback(configSaveCallback); // set config save notify callback
         wifiManager.setCustomHeadElement(web.getStyle());      // add custom style

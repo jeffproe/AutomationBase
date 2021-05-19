@@ -3,12 +3,7 @@
 #include "common.h"
 #include "settings.h"
 #include <Arduino.h>
-#ifdef ESP_32
 #include <ESP_WiFiManager.h>
-#elif defined(ESP_8266) 
-#include <WiFiManager.h>
-#endif
-
 
 class Esp
 {

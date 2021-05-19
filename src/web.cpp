@@ -103,15 +103,9 @@ void Web::loop()
 
 void Web::resetWifiManager()
 {
-  #ifdef ESP_32
-    debug.printLn(F("RESET: Clearing WiFiManager settings..."));
+  debug.printLn(F("RESET: Clearing WiFiManager settings..."));
   ESP_WiFiManager wifiManager;
   wifiManager.resetSettings();
-  #elif defined(ESP_8266)
-  debug.printLn(F("RESET: Clearing WiFiManager settings..."));
-  WiFiManager wifiManager;
-  wifiManager.resetSettings();
-  #endif
 }
 
 void Web::_setupHTTP()
@@ -128,7 +122,7 @@ void Web::_setupHTTP()
 void Web::_setupMDNS()
 {
 #ifdef ESP_32
-  if(!MDNS.begin(config.getNodeName()))
+  if (!MDNS.begin(config.getNodeName()))
   {
     debug.printLn(String(F("MDNS: Init failed!")));
     return;
@@ -264,25 +258,12 @@ void Web::_handleRoot()
   }
 
   debug.printLn(String(F("HTTP: Sending root page to client connected from: ")) + webServer.client().remoteIP().toString());
-#ifdef ESP_32
   String httpMessage = FPSTR(WM_HTTP_HEAD_START);
-#elif defined(ESP_8266)
-  String httpMessage = FPSTR(HTTP_HEADER);
-#endif
   httpMessage.replace("{v}", String(config.getNodeName()));
-#ifdef ESP_32
   httpMessage += FPSTR(WM_HTTP_SCRIPT);
   httpMessage += FPSTR(WM_HTTP_STYLE);
-#elif defined(ESP_8266)
-  httpMessage += FPSTR(HTTP_SCRIPT);
-  httpMessage += FPSTR(HTTP_STYLE);
-#endif
   httpMessage += String(_style);
-#ifdef ESP_32
   httpMessage += FPSTR(WM_HTTP_HEAD_END);
-#elif defined(ESP_8266)
-  httpMessage += FPSTR(HTTP_HEADER_END);
-#endif
   httpMessage += String(F("<h1>"));
   httpMessage += String(config.getNodeName());
   httpMessage += String(F("</h1>"));
@@ -356,11 +337,7 @@ void Web::_handleRoot()
   httpMessage += String(F("<br/><b>Last reset: </b>")) + String(ESP.getResetInfo());
 #endif
 
-#ifdef ESP_32
   httpMessage += FPSTR(WM_HTTP_END);
-#elif defined(ESP_8266)
-  httpMessage += FPSTR(HTTP_END);
-#endif
   webServer.send(200, "text/html", httpMessage);
 }
 
@@ -373,19 +350,10 @@ void Web::_handleSaveConfig()
 
   debug.printLn(String(F("HTTP: Sending /saveConfig page to client connected from: ")) + webServer.client().remoteIP().toString());
   String httpMessage = "";
-#ifdef ESP_32
   httpMessage = FPSTR(WM_HTTP_HEAD_START);
-#elif defined(ESP_8266)
-  httpMessage = FPSTR(HTTP_HEADER);
-#endif
   httpMessage.replace("{v}", String(config.getNodeName()));
-#ifdef ESP_32
   httpMessage += FPSTR(WM_HTTP_SCRIPT);
   httpMessage += FPSTR(WM_HTTP_STYLE);
-#elif defined(ESP_8266)
-  httpMessage += FPSTR(HTTP_SCRIPT);
-  httpMessage += FPSTR(HTTP_STYLE);
-#endif
   httpMessage += String(_style);
 
   bool shouldSaveWifi = false;
@@ -467,18 +435,10 @@ void Web::_handleSaveConfig()
   if (config.getSaveNeeded())
   { // Config updated, notify user and trigger write to SPIFFS
     httpMessage += String(F("<meta http-equiv='refresh' content='15;url=/' />"));
-#ifdef ESP_32
     httpMessage += FPSTR(WM_HTTP_HEAD_END);
-#elif defined(ESP_8266)
-    httpMessage += FPSTR(HTTP_HEADER_END);
-#endif
     httpMessage += String(F("<h1>")) + String(config.getNodeName()) + String(F("</h1>"));
     httpMessage += String(F("<br/>Saving updated configuration values and restarting device"));
-#ifdef ESP_32
     httpMessage += FPSTR(WM_HTTP_END);
-#elif defined(ESP_8266)
-    httpMessage += FPSTR(HTTP_END);
-#endif
     webServer.send(200, "text/html", httpMessage);
 
     config.saveFile();
@@ -492,18 +452,10 @@ void Web::_handleSaveConfig()
   else
   { // No change found, notify user and link back to config page
     httpMessage += String(F("<meta http-equiv='refresh' content='3;url=/' />"));
-#ifdef ESP_32
     httpMessage += FPSTR(WM_HTTP_HEAD_END);
-#elif defined(ESP_8266)
-    httpMessage += FPSTR(HTTP_HEADER_END);
-#endif
     httpMessage += String(F("<h1>")) + String(config.getNodeName()) + String(F("</h1>"));
     httpMessage += String(F("<br/>No changes found, returning to <a href='/'>home page</a>"));
-#ifdef ESP_32
     httpMessage += FPSTR(WM_HTTP_END);
-#elif defined(ESP_8266)
-    httpMessage += FPSTR(HTTP_END);
-#endif
     webServer.send(200, "text/html", httpMessage);
   }
 }
@@ -517,36 +469,19 @@ void Web::_handleResetConfig()
 
   debug.printLn(String(F("HTTP: Sending /resetConfig page to client connected from: ")) + webServer.client().remoteIP().toString());
   String httpMessage = "";
-#ifdef ESP_32
   httpMessage = FPSTR(WM_HTTP_HEAD_START);
-#elif defined(ESP_8266)
-  httpMessage = FPSTR(HTTP_HEADER);
-#endif
   httpMessage.replace("{v}", String(config.getNodeName()));
-#ifdef ESP_32
   httpMessage += FPSTR(WM_HTTP_SCRIPT);
   httpMessage += FPSTR(WM_HTTP_STYLE);
-#elif defined(ESP_8266)
-  httpMessage += FPSTR(HTTP_SCRIPT);
-  httpMessage += FPSTR(HTTP_STYLE);
-#endif
   httpMessage += String(_style);
-#ifdef ESP_32
   httpMessage += FPSTR(WM_HTTP_HEAD_END);
-#elif defined(ESP_8266)
-  httpMessage += FPSTR(HTTP_HEADER_END);
-#endif
 
   if (webServer.arg("confirm") == "yes")
   { // User has confirmed, so reset everything
     httpMessage += String(F("<h1>"));
     httpMessage += String(config.getNodeName());
     httpMessage += String(F("</h1><b>Resetting all saved settings and restarting device into WiFi AP mode</b>"));
-#ifdef ESP_32
     httpMessage += FPSTR(WM_HTTP_END);
-#elif defined(ESP_8266)
-    httpMessage += FPSTR(HTTP_END);
-#endif
     webServer.send(200, "text/html", httpMessage);
     delay(1000);
     config.clearFileSystem();
@@ -558,11 +493,7 @@ void Web::_handleResetConfig()
     httpMessage += String(F("<br/><br/><button type='submit' name='confirm' value='yes'>reset all settings</button></form>"));
     httpMessage += String(F("<br/><hr><br/><form method='get' action='/'>"));
     httpMessage += String(F("<button type='submit'>return home</button></form>"));
-#ifdef ESP_32
     httpMessage += FPSTR(WM_HTTP_END);
-#elif defined(ESP_8266)
-    httpMessage += FPSTR(HTTP_END);
-#endif
     webServer.send(200, "text/html", httpMessage);
   }
 }
@@ -576,33 +507,16 @@ void Web::_handleReboot()
 
   debug.printLn(String(F("HTTP: Sending /reboot page to client connected from: ")) + webServer.client().remoteIP().toString());
   String httpMessage = "";
-#ifdef ESP_32
   httpMessage = FPSTR(WM_HTTP_HEAD_START);
-#elif defined(ESP_8266)
-  httpMessage = FPSTR(HTTP_HEADER);
-#endif
   httpMessage.replace("{v}", (String(config.getNodeName()) + " ESP reboot"));
-#ifdef ESP_32
   httpMessage += FPSTR(WM_HTTP_SCRIPT);
   httpMessage += FPSTR(WM_HTTP_STYLE);
-#elif defined(ESP_8266)
-  httpMessage += FPSTR(HTTP_SCRIPT);
-  httpMessage += FPSTR(HTTP_STYLE);
-#endif
   httpMessage += String(_style);
   httpMessage += String(F("<meta http-equiv='refresh' content='10;url=/' />"));
-#ifdef ESP_32
   httpMessage += FPSTR(WM_HTTP_HEAD_END);
-#elif defined(ESP_8266)
-  httpMessage += FPSTR(HTTP_HEADER_END);
-#endif
   httpMessage += String(F("<h1>")) + String(config.getNodeName()) + String(F("</h1>"));
   httpMessage += String(F("<br/>Rebooting device"));
-#ifdef ESP_32
   httpMessage += FPSTR(WM_HTTP_END);
-#elif defined(ESP_8266)
-  httpMessage += FPSTR(HTTP_END);
-#endif
   webServer.send(200, "text/html", httpMessage);
   debug.printLn(F("RESET: Rebooting device"));
   esp.reset();
